@@ -1,0 +1,30 @@
+name        = 'vm-{{ vm_name }}'
+
+
+#### common VM specific configuration ####
+
+memory      = '{{ meminmb }}'
+disk        = [
+                  'phy:/dev/{{ lvm_vg|d('vgxen') }}/vm-{{ vm_name }},xvda,w',
+              ]
+vif         = [
+                 'ip={{ ip }},mac={{ mac }},bridge={{ xenbr }}',
+              ]
+{% if vm_cpus|d() %}
+cpus = '{{ cpus }}'
+{% endif %}
+vcpus = {{ vcpus|d('2') }}
+
+#### for staging new system ####
+on_poweroff = 'destroy'
+on_reboot   = 'destroy'
+on_crash    = 'destroy'
+kernel      = '/srv/xen/netboot/{{ release }}/vmlinuz'
+ramdisk     = '/srv/xen/netboot/{{ release }}/initrd.gz'
+root        = 'install text netcfg/choose_interface=eth0 auto=true priority=critical preseed/url=http://seed.freesources.org/preseed/{{ release }}/{{ preseed|d('vm-fs') }}.cfg netcfg/disable_dhcp=true netcfg/get_ipaddress={{ ip }} netcfg/get_netmask={{ netmask }} netcfg/get_gateway={{ gateway }} netcfg/confirm_static=true netcfg/get_nameservers="{{ nameservers|join(' ') }}"'
+
+### for running existing system ####
+#on_poweroff = 'destroy'
+#on_reboot   = 'restart'
+#on_crash    = 'restart'
+#bootloader  = 'pygrub'

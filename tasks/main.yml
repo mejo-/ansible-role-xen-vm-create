@@ -1,0 +1,79 @@
+---
+
+- name: check if LVM volume for VM system exists
+  stat:
+    path: /dev/{{ lvm_vg|d('vgxen') }}/vm-{{ vm_name }}
+  register: vm_lv_exists
+
+- fail:
+    msg: "LVM volume /dev/{{ lvm_vg|d('vgxen') }}/vm-{{ vm_name }} already exists"
+  when: vm_lv_exists.stat.exists|d()
+
+- name: create LVM volume for VM system
+  lvol:
+    vg: "{{ lvm_vg|d('vgxen') }}"
+    lv: "vm-{{ vm_name }}"
+    size: "{{ diskingb }}g"
+
+- name: generate random MAC address for VM
+  local_action: command {{ role_path }}/scripts/xen_gen_mac.py
+  register: mac_generated
+  when: not mac|d()
+
+- set_fact:
+    mac: "{{ mac_generated.stdout }}"
+  when: not mac|d()
+
+- name: copy Xen VM install config for new VM
+  template:
+    src: vm-install.cfg.j2
+    dest: "/etc/xen/VMs/vm-{{ vm_name }}.cfg"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: start Xen VM with installer
+  command: xl create /etc/xen/VMs/vm-{{ vm_name }}.cfg
+
+- debug:
+    msg: "Attach to console on hypervisor: xl console vm-{{ vm_name }}"
+
+- name: determine Xen VM ID
+  shell: xl list vm-{{ vm_name }} | tail -n+2 | awk '{print $2}'
+  register: vm_xen_domain_id
+
+- name: determine Xen VM userdata json file
+  find:
+    paths: "/var/lib/xen"
+    patterns: "userdata-d.{{ vm_xen_domain_id.stdout }}.*.libxl-json"
+  register: vm_xen_userdata
+
+- debug:
+    msg: "wait for {{ vm_xen_userdata.files.0.path }} to disappear"
+
+- name: wait for new VM to reboot
+  wait_for:
+    path: "{{ vm_xen_userdata.files.0.path }}"
+    state: absent
+    delay: 45
+    timeout: 900
+
+- name: copy Xen VM final config for new VM
+  template:
+    src: vm.cfg.j2
+    dest: "/etc/xen/VMs/vm-{{ vm_name }}.cfg"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: add VM to auto-start VMs
+  file:
+    src: "/etc/xen/VMs/vm-{{ vm_name }}.cfg"
+    dest: "/etc/xen/auto/vm-{{ vm_name }}.cfg"
+    state: link
+    owner: root
+    group: root
+  when: auto|d(true)
+
+- name: start Xen VM again after installation
+  command: xl create /etc/xen/VMs/vm-{{ vm_name }}.cfg
