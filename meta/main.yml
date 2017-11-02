@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Jonas Meurer
+  description: Create Xen VMs on a Debian Xen Dom0
+  company: freesources.org
+  license: GPLv3
+  min_ansible_version: 2.2
+  galaxy_tags:
+    - virtualization
+    - virtual machine
+    - xen
+  platforms:
+  - name: Debian
+    versions:
+      - jessie
+      - stretch
+  notifications:
+    webhooks: https://galaxy.ansible.com/api/v1/notifications/

@@ -1,5 +1,7 @@
 # Ansible role to create VMs on a Xen Dom0
 
+[![Ansible Galaxy](http://img.shields.io/badge/ansible--galaxy-xen-vm-create-blue.svg)](https://galaxy.ansible.com/mejo-/xen-vm-create/)
+
 This role creates a Xen VM on a Dom0. It requires several variables
 to be set (see below).
 
