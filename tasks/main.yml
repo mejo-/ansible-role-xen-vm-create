@@ -34,6 +34,8 @@
 
 - name: start Xen VM with installer
   command: xl create /etc/xen/VMs/vm-{{ vm_name }}.cfg
+  tags:
+    - molecule_test_skip
 
 - debug:
     msg: "Attach to console on hypervisor: xl console vm-{{ vm_name }}"
@@ -41,15 +43,21 @@
 - name: determine Xen VM ID
   shell: xl list vm-{{ vm_name }} | tail -n+2 | awk '{print $2}'
   register: vm_xen_domain_id
+  tags:
+    - molecule_test_skip
 
 - name: determine Xen VM userdata json file
   find:
     paths: "/var/lib/xen"
     patterns: "userdata-d.{{ vm_xen_domain_id.stdout }}.*.libxl-json"
   register: vm_xen_userdata
+  tags:
+    - molecule_test_skip
 
 - debug:
     msg: "wait for {{ vm_xen_userdata.files.0.path }} to disappear"
+  tags:
+    - molecule_test_skip
 
 - name: wait for new VM to reboot
   wait_for:
@@ -57,6 +65,8 @@
     state: absent
     delay: 45
     timeout: 900
+  tags:
+    - molecule_test_skip
 
 - name: copy Xen VM final config for new VM
   template:
@@ -77,3 +87,5 @@
 
 - name: start Xen VM again after installation
   command: xl create /etc/xen/VMs/vm-{{ vm_name }}.cfg
+  tags:
+    - molecule_test_skip

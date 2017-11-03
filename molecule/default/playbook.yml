@@ -3,3 +3,5 @@
   hosts: all
   roles:
     - role: ansible-role-xen-vm-create
+  vars:
+    - vm_name: testvm
