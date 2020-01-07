@@ -17,6 +17,7 @@
 
 - name: generate random MAC address for VM
   local_action: command {{ role_path }}/scripts/xen_gen_mac.py
+  become: False
   register: mac_generated
   when: not mac|d()
 
